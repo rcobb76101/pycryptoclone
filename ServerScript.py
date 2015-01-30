@@ -4,7 +4,7 @@ from flask import Flask, request, make_response
 
 app = Flask(__name__)
 
-@app.route('/', methods=['POST']
+@app.route('/', methods=['POST'])
 def index():
 	response = make_response()
 	print request.headers
