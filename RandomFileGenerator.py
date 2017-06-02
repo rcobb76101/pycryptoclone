@@ -1,38 +1,35 @@
 import os
 import random
+import uuid
+import argparse
 
-document 		= 'document_'
-powerpoint 	= 'presentation_'
-spreadsheet 	= 'spreadsheet_'
+def generate_files(output_paths):
+    files_created = 0
+    
+    doc_types = [
+        ('document_', '.docx'),
+        ('presentation_', '.pptx'),
+        ('spreadsheet_', '.xlsx')
+    ]
 
-docs 			= [document, powerpoint, spreadsheet]
-
-locations 		= [r'C:\Users\murrysa\Documents', r'C:\Users\murrysa\Desktop', r'K:']
-
-for location in locations:
-	for doctype in docs:
-		
-		if doctype == 'document_':
-			extension = '.docx'
-		elif doctype == 'presentation_':
-			extension = '.pptx'
-		elif doctype == 'spreadsheet_':
-			extension = '.xlsx'
-		else:
-			extension = '.txt'
-			
-		if location == 'K:':
-			number_of_docs = random.randint(5000, 10000)
-		else:
-			number_of_docs = random.randint(25, 50)
-		
-		for i in range(number_of_docs):
-			doc_num = random.randint(1, 100)
-			
-			doc_name = '{0}{1}{2}'.format(doctype, doc_num, extension)
-			doc_name = os.path.join(location, doc_name)
-			
-			file_size = random.randint(1, 2048 * 1024)
-			
-			with open(doc_name, 'wb') as file:
-				file.write(os.urandom(file_size))
+    for location in output_paths:
+        for prefix, extension in doc_types:
+            number_of_docs = random.randint(15,30)
+            for i in range(number_of_docs):
+                doc_uuid = str(uuid.uuid1())
+                doc_name = os.path.join(os.path.abspath(location), prefix + doc_uuid + extension)
+                file_size = random.randint(1, 2048 * 1024)
+                with open(doc_name, 'w') as output_file:
+                    print('Generating {}'.format(doc_name))
+                    files_created += 1
+                    output_file.write('UNENCRYPTED' * file_size)
+                    
+    return files_created
+                
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Create a random number of documents for ransomware encryption demonstrations')
+    parser.add_argument('output_paths', help='Directories where randomly generated documents will be created', nargs='+')
+    args = parser.parse_args()
+    files_created = generate_files(args.output_paths)
+    print('Finished - created {} files'.format(files_created))
+    
